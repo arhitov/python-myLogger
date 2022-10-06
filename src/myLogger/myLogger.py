@@ -165,5 +165,5 @@ class MyLoggerClass:
             log_string += 'Context kwargs: ' + str(kwargs) + "\n"
 
         file.write(log_string)
-        (self.stdout if 1 else self.stderr).write(log_string)
+        (self.stderr if _eventDataList[level]['alert'] else self.stdout).write(log_string)
         file.close()
