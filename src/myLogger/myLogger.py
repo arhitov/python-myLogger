@@ -1,5 +1,11 @@
+import os
+import sys
 from datetime import datetime, timezone, timedelta
 import time
+
+if (3 != sys.version_info.major) or (10 > sys.version_info.minor):
+    print('Error Python version! Please use only >= 3.10')
+    exit(1)
 
 '''
 Система сама может продиагностировать своё состояние, например, задачей по расписанию, и в результате записать
@@ -99,22 +105,22 @@ def _get_datatime_iso() -> str:
 class MyLoggerClass:
     def __init__(self,
                  file: str,
-                 format_line: str = _formatDefault,
+                 format_log: str = _formatDefault,
                  format_data: dict = None,
                  stdout=None,
                  stderr=None):
         self.file = file
         self.format_data = {} if format_data is None else format_data
 
-        self.stdout = open('/dev/null', 'a+') if stdout is None else stdout
-        self.stderr = open('/dev/null', 'a+') if stderr is None else stderr
+        self.stdout = open(os.devnull, 'a+') if stdout is None else stdout
+        self.stderr = open(os.devnull, 'a+') if stderr is None else stderr
 
         # test format
         try:
-            format_line.format(**(self.__format_data()))
-            self.format_line = format_line
+            format_log.format(**(self.__format_data()))
+            self.format_log = format_log
         except KeyError:
-            self.format_line = _formatDefault
+            self.format_log = _formatDefault
 
     def alert(self, msg: str, *args, **kwargs) -> None:
         self.__emit(EVENT_ALERT, msg, *args, **kwargs)
@@ -153,16 +159,16 @@ class MyLoggerClass:
 
     def __emit(self, level: int, msg: str, *args, **kwargs) -> None:
         file = open(self.file, 'a')
-        log_string = self.format_line.format(**(self.__format_data(
+        log_string = self.format_log.format(**(self.__format_data(
             datatimeiso=_get_datatime_iso(),
             levelname=_eventDataList[level]['name'],
             msg=msg))) + "\n"
 
         if len(args):
-            log_string += 'Context args: ' + str(args) + "\n"
+            log_string += 'Context args: ' + str(args).replace(r'\n', '\n') + "\n"
 
         if len(kwargs):
-            log_string += 'Context kwargs: ' + str(kwargs) + "\n"
+            log_string += 'Context kwargs: ' + str(kwargs).replace(r'\n', '\n') + "\n"
 
         file.write(log_string)
         (self.stderr if _eventDataList[level]['alert'] else self.stdout).write(log_string)
